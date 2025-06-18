@@ -8,7 +8,6 @@ import Login from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
-import { ProjectEditor as ProjectEditorPage } from './pages/ProjectEditor';
 import { ProjectWorkspace } from './components/projects/ProjectWorkspace';
 import { Challenges } from './pages/Challenges';
 import { Community } from './pages/Community';
@@ -52,19 +51,6 @@ function AppContent() {
           ) : (user || isGuest) ? (
             <MainLayout>
               <Projects />
-            </MainLayout>
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        } />
-        <Route path="/project/:id" element={
-          isLoading ? (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : (user || isGuest) ? (
-            <MainLayout>
-              <ProjectEditorPage />
             </MainLayout>
           ) : (
             <Navigate to="/login" replace />

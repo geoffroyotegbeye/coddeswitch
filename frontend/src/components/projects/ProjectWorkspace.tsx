@@ -5,6 +5,7 @@ import { ProjectHeader } from './ProjectHeader';
 import { ProjectSidebar } from './ProjectSidebar';
 import { SuccessModal } from './SuccessModal';
 import { mockProjectData } from '../../data/projectData';
+import { useNotification } from '../../contexts/NotificationContext';
 
 interface ProjectStep {
   id: string;
@@ -41,11 +42,14 @@ interface ProjectWorkspaceProps {
 export function ProjectWorkspace({ standalone = false }: ProjectWorkspaceProps) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [userCode, setUserCode] = useState('');
   const [isStepCompleted, setIsStepCompleted] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldReset, setShouldReset] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const projectData: ProjectData = {
     ...mockProjectData,
@@ -66,9 +70,26 @@ export function ProjectWorkspace({ standalone = false }: ProjectWorkspaceProps) 
 
   useEffect(() => {
     if (currentStep) {
+      const storageKey = `codeswitch_tabs_${id}`;
+      const savedTabs = localStorage.getItem(storageKey);
+      
+      if (savedTabs && !shouldReset) {
+        try {
+          const parsedTabs = JSON.parse(savedTabs);
+          const htmlTab = parsedTabs.find((tab: any) => tab.language === 'html');
+          if (htmlTab) {
+            setUserCode(htmlTab.content);
+            return;
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement du code sauvegardé:', error);
+        }
+      }
+      
       setUserCode(currentStep.starterCode);
+      setShouldReset(false);
     }
-  }, [currentStepIndex, currentStep]);
+  }, [currentStepIndex, currentStep, id, shouldReset]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -100,6 +121,63 @@ export function ProjectWorkspace({ standalone = false }: ProjectWorkspaceProps) 
       window.close();
     } else {
       navigate('/projects');
+    }
+  };
+
+  const handleReset = () => {
+    setShouldReset(true);
+  };
+
+  const handleSave = async () => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      // Récupérer tous les onglets depuis le localStorage
+      const storageKey = `codeswitch_tabs_${id}`;
+      const savedTabs = localStorage.getItem(storageKey);
+      let codeToSave = userCode;
+      
+      if (savedTabs) {
+        try {
+          const parsedTabs = JSON.parse(savedTabs);
+          const htmlTab = parsedTabs.find((tab: any) => tab.language === 'html');
+          if (htmlTab) {
+            codeToSave = htmlTab.content;
+          }
+        } catch (error) {
+          console.error('Erreur lors de la récupération des onglets:', error);
+        }
+      }
+
+      // TODO: Remplacer par votre appel API réel
+      const response = await fetch(`/api/projects/${id}/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: codeToSave,
+          stepIndex: currentStepIndex,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la sauvegarde');
+      }
+
+      showNotification({
+        type: 'success',
+        message: 'Code sauvegardé avec succès !',
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      showNotification({
+        type: 'error',
+        message: 'Erreur lors de la sauvegarde du code',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -140,6 +218,8 @@ export function ProjectWorkspace({ standalone = false }: ProjectWorkspaceProps) 
             totalSteps={projectData.steps.length}
             isCompleted={isStepCompleted}
             onSubmit={handleCodeSubmit}
+            onReset={handleReset}
+            onSave={handleSave}
           />
         </div>
 

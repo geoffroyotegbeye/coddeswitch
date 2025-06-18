@@ -1,90 +1,169 @@
 import React, { useState } from 'react';
-import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
-import { Project } from '../../types';
-import ProjectsList from './projects/ProjectsList';
 import ProjectEditor from './projects/ProjectEditor';
+import { Button } from '../common/Button';
+import { Input } from '../common/Input';
+import { Plus, Search, Edit, Trash, Eye, ChevronLeft } from 'lucide-react';
+import { mockProjectData } from '../../data/projectData';
+import { Project } from '../../types';
+
+// Créer un tableau de projets pour les tests
+const mockProjects: Project[] = [
+  mockProjectData,
+  {
+    ...mockProjectData,
+    id: '2',
+    title: 'Application Todo List',
+    language: 'javascript',
+    difficulty: 'intermediate'
+  },
+  {
+    ...mockProjectData,
+    id: '3',
+    title: 'Blog avec React',
+    language: 'react',
+    difficulty: 'advanced'
+  }
+];
 
 function ProjectsListContainer() {
   const navigate = useNavigate();
   const { success } = useNotification();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const handleEditProject = (project: Project) => {
-    navigate(`/admin/projects/edit/${project.id}`);
-  };
-
-  const handleViewProject = (project: Project) => {
-    // Ouvrir le projet dans un nouvel onglet
-    window.open(`/project/${project.id}`, '_blank');
-  };
-
-  const handleDeleteProject = (projectId: string) => {
-    // Ici, vous pourriez appeler une API pour supprimer le projet
-    success('Projet supprimé avec succès');
-  };
-
-  const handleAddProject = () => {
+  const handleCreateProject = () => {
     navigate('/admin/projects/new');
   };
 
+  const filteredProjects = mockProjects.filter(project =>
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.difficulty.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <ProjectsList 
-      onEditProject={handleEditProject}
-      onViewProject={handleViewProject}
-      onDeleteProject={handleDeleteProject}
-      onAddProject={handleAddProject}
-    />
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-white">Projets</h1>
+        <Button
+          onClick={handleCreateProject}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Nouveau projet
+        </Button>
+      </div>
+
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Rechercher un projet..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      <div className="bg-gray-800 rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-700">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Titre
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Langage
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Difficulté
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700">
+            {filteredProjects.map((project) => (
+              <tr key={project.id} className="hover:bg-gray-700">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                  {project.title}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {project.language}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {project.difficulty}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/admin/projects/edit/${project.id}`)}
+                      title="Modifier"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/project-standalone/${project.id}`)}
+                      title="Voir"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {/* TODO: Implement delete */}}
+                      title="Supprimer"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 
 function ProjectEditorContainer() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { success } = useNotification();
-  const [initialProject, setInitialProject] = useState<Project | undefined>(undefined);
-
-  // Simuler le chargement des données d'un projet existant
-  React.useEffect(() => {
-    if (id) {
-      // Dans une application réelle, vous feriez un appel API ici
-      // Simulation d'un projet pour l'édition
-      setInitialProject({
-        id,
-        name: 'Portfolio Personnel',
-        description: 'Un portfolio moderne pour développeurs avec sections personnalisables',
-        difficulty: 'intermediate',
-        category: 'frontend',
-        tags: ['react', 'tailwind', 'portfolio'],
-        created_at: '2025-03-15T10:30:00Z',
-        updated_at: '2025-06-01T14:25:00Z',
-        stars: 124,
-        author_id: '1',
-        author_name: 'Jean Dupont',
-        image_url: 'https://via.placeholder.com/300x200?text=Portfolio'
-      });
-    }
-  }, [id]);
-
-  const handleSave = (project: Project) => {
-    // Dans une application réelle, vous feriez un appel API ici
-    success(id ? 'Projet mis à jour avec succès' : 'Projet créé avec succès');
-    navigate('/admin/projects');
-  };
-
-  const handleCancel = () => {
-    navigate('/admin/projects');
-  };
 
   return (
+    <div className="p-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/admin/projects')}
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Retour
+        </Button>
+        <h1 className="text-2xl font-bold text-white">
+          {id ? 'Modifier le projet' : 'Nouveau projet'}
+        </h1>
+      </div>
+
     <ProjectEditor
-      initialProject={initialProject}
-      onSave={handleSave}
-      onCancel={handleCancel}
+        project={id ? mockProjects.find(p => p.id === id) : undefined}
+        onSave={() => navigate('/admin/projects')}
     />
+    </div>
   );
 }
 
-export function AdminProjects() {
+export default function AdminProjects() {
   return (
     <Routes>
       <Route path="/" element={<ProjectsListContainer />} />

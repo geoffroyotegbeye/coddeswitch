@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { AdminUsers } from '../components/admin/AdminUsers';
-import { AdminProjects } from '../components/admin/AdminProjects';
+import AdminProjects from '../components/admin/AdminProjects';
 import { AdminBlog } from '../components/admin/AdminBlog';
 import { AdminCommunity } from '../components/admin/AdminCommunity';
 import { AdminSettings } from '../components/admin/AdminSettings';

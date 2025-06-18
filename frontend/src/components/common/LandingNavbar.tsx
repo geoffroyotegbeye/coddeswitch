@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Code2, Menu, X } from 'lucide-react';
 import { Button } from './Button';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function LandingNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <nav className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-50">
@@ -30,11 +32,19 @@ export function LandingNavbar() {
             <a href="/blog" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors">
               Blog
             </a>
+            {user ? (
+              <Link to="/dashboard">
+                <Button variant="outline" size="sm">
+                  Tableau de bord
+                </Button>
+              </Link>
+            ) : (
             <Link to="/login">
               <Button variant="outline" size="sm">
                 Se connecter
               </Button>
             </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -80,11 +90,19 @@ export function LandingNavbar() {
               Blog
             </a>
             <div className="px-3">
+              {user ? (
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Tableau de bord
+                  </Button>
+                </Link>
+              ) : (
               <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="outline" size="sm" className="w-full">
                   Se connecter
                 </Button>
               </Link>
+              )}
             </div>
           </div>
         )}
